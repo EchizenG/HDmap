@@ -3,6 +3,7 @@
 #include "communication.hpp"
 #include "search.hpp"
 #include "resolve.hpp"
+#include "HDmap.hpp"
 
 /*THIS IS FOR CAN
 int main(int argc, char **argv)
@@ -76,6 +77,7 @@ int main(int argc, char **argv)
 }
 */
 
+/*THIS IS FOR JSON
 int main(int argc, char **argv)
 {
 	
@@ -107,6 +109,83 @@ int main(int argc, char **argv)
 	string addtype = start_address.get<string>("addressType");
 	
 	printf("addtype: %s\n", addtype.c_str());
+
+	return 0;
+}
+*/
+enum msg_type
+{
+  OBU_MSG_START_PARK_NOTIFY =0x0,	// 0x0启动泊车通知
+	OBU_MSG_MAP_REQ,		     		    // 0x1地图文件请求
+	OBU_MSG_MAP_RSP,     		  		  // 0x2地图文件响应
+	OBU_MSG_PARKING_SPACE_REQ,	    // 0x3申请停车位请求
+	OBU_MSG_PARKING_SPACE_RSP,      // 0x4申请停车位响应
+	OBU_MSG_GLOBAL_PATH_REQ, 		    // 0x5 全局路径规划请求
+  OBU_MSG_GLOBAL_PATH_RSP, 		    // 0x6 全局路径规划响应
+  OBU_MSG_CAR_POS_REQ,	    	  	// 0x7 车辆位置请求
+  OBU_MSG_CAR_POS_RSP,	    		  // 0x8 车辆位置响应
+  OBU_MSG_CAR_POS_NOTIFY,	    	  // 0x9 车辆位置通知
+  OBU_MSG_BARRIERS_NOTIFY,			  // 0xA 障碍物列表通知
+  OBU_MSG_APA_STATUS_NOTIFY,		  // 0xB APA状态通知
+  OBU_MSG_APA_COMMAND			        // 0xC APA命令下发
+};
+
+int main(int argc, char **argv)
+{
+	
+	HDmap map_handler;
+
+	map_handler.setIP((char *)"192.168.3.191");
+	map_handler.setPORT(5050);
+
+	map_handler.connectTCP();
+	struct Communication::msg_header head = map_handler.getHEAD();
+	printf("head: %d\n", head.msg_type);
+	printf("body_len: %d\n", head.body_len);
+
+
+	switch(head.msg_type)
+	{
+		case OBU_MSG_START_PARK_NOTIFY:
+
+		break;
+		case OBU_MSG_MAP_REQ:
+
+		break;
+		case OBU_MSG_MAP_RSP:
+		map_handler.getMAP(head);
+
+		break;
+		case OBU_MSG_PARKING_SPACE_REQ:
+		break;
+		case OBU_MSG_PARKING_SPACE_RSP:
+
+		break;
+		case OBU_MSG_GLOBAL_PATH_REQ:
+
+    break;
+    case OBU_MSG_GLOBAL_PATH_RSP:
+
+    break;
+    case OBU_MSG_CAR_POS_REQ:
+
+    break;
+    case OBU_MSG_CAR_POS_RSP:
+
+    break;
+    case OBU_MSG_CAR_POS_NOTIFY:
+
+    break;
+    case OBU_MSG_BARRIERS_NOTIFY:
+
+    break;
+    case OBU_MSG_APA_STATUS_NOTIFY:
+
+    break;
+    case OBU_MSG_APA_COMMAND:
+
+    break;
+	}
 
 	return 0;
 }

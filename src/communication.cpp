@@ -50,19 +50,22 @@ bool Communication::connectTCP(void)
   }
 }
 
-int Communication::getHEAD(void)
+struct Communication::msg_header Communication::getHEAD(void)
 {
 	char buffer[18] = {'0'};
 
 	if(17 == read(conInfo.sHandler,buffer,17))
 	{
-		memcpy(header, buffer, 17);
-		return header->msg_type;
+		header.msg_type = buffer[0];
+		header.body_len = ( ( buffer[5] & 0xff) << 24 ) + ( ( buffer[6] & 0xff ) << 16 ) + ((buffer[7] & 0xff) << 8) + (buffer[8] & 0xff);
+		// header = (struct msg_header*)buffer;
+
+		return header;
 	}
 	else
 	{
 		printf("can not read msg head, errno: %d\n", errno);
-		return -1;
+		//return 0;
 	}
 }
 

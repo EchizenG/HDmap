@@ -51,20 +51,23 @@ public:
 		int64_t timestamp;
 	};
 
-	bool    connectTCP(void);
-	int     getHEAD(void);
-	bool    getBODY(char *data);
-	void    setIP(char *IP);
-	void    setPORT(int port);
+	bool                    connectTCP(void);
+	struct msg_header      getHEAD(void);
+	bool                    getBODY(char *data);
+	void                    setIP(char *IP);
+	void                    setPORT(int port);
   	
 	int     can_open(struct can_hdl **hdl, struct can_cfg *cfg);
 	int     can_close(struct can_hdl **hdl);
 	ssize_t can_read(struct can_hdl *hdl, struct can_frame *frame);
 	ssize_t can_write(struct can_hdl *hdl, const struct can_frame *frame);
 
+protected:
+	struct connectInfo conInfo;
+	struct msg_header header;
+
 private:
 	int can_socket_cfg(struct can_hdl *hdl, struct can_cfg *cfg);
-	struct msg_header *header;
-	struct connectInfo conInfo;
+
 };
 #endif //define _COMMUNICATION_HPP_

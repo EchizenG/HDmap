@@ -13,7 +13,8 @@ class Resolve
  	Resolve();
 
  	bool parseJSON(const std::string json, boost::property_tree::ptree& messages);
-
+	bool stringifyJSON(std::stringstream &sendData, const boost::property_tree::ptree pt);
+	
  	~Resolve();
  	
  };
