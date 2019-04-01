@@ -52,8 +52,8 @@ public:
 	};
 
 	bool                    connectTCP(void);
-	struct msg_header      getHEAD(void);
-	bool                    getBODY(char *data);
+	struct msg_header       getHEAD(void);
+	bool                    getBODY(char *data, int size);
 	void                    setIP(char *IP);
 	void                    setPORT(int port);
   	

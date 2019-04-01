@@ -69,9 +69,9 @@ struct Communication::msg_header Communication::getHEAD(void)
 	}
 }
 
-bool Communication::getBODY(char *data)
+bool Communication::getBODY(char *data, int size)
 {
-	if(read(conInfo.sHandler, data, 65534))
+	if(read(conInfo.sHandler, data, size))
 	{
 		return true;
 	}

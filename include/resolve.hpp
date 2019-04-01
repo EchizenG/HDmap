@@ -3,8 +3,8 @@
 
 #include <iostream>
 #include <string>
-#include "boost/property_tree/json_parser/detail/read.hpp"
 #include "boost/property_tree/ptree.hpp"
+
 
 
 class Resolve
@@ -14,7 +14,8 @@ class Resolve
 
  	bool parseJSON(const std::string json, boost::property_tree::ptree& messages);
 	bool stringifyJSON(std::stringstream &sendData, const boost::property_tree::ptree pt);
-	
+	bool getMAP(char *bodybuffer);
+
  	~Resolve();
  	
  };
