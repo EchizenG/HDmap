@@ -56,6 +56,8 @@ public:
 	bool                    getBODY(char *data, int size);
 	void                    setIP(char *IP);
 	void                    setPORT(int port);
+	bool 					sendREQ(char *data, int size);
+
   	
 	int     can_open(struct can_hdl **hdl, struct can_cfg *cfg);
 	int     can_close(struct can_hdl **hdl);

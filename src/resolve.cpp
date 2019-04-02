@@ -113,3 +113,84 @@ bool Resolve::getMAP(char *data)
 
 	return true;
 }
+
+size_t Resolve::setMAPreq(char *data)
+{
+  boost::property_tree::ptree pt_singleItem;
+	boost::property_tree::ptree pt_multeItems;
+	boost::property_tree::ptree pt_reqInfo;
+
+	char map_id[15] = "qianhai_001";
+	char version[5] = "v1.0";
+	char lastModifyTime[20] = "2019-2-8 10:11:23";
+
+	pt_singleItem.put("map_id", map_id);
+	pt_singleItem.put("version", version);
+	pt_singleItem.put("lastModifyTime", lastModifyTime);
+
+	pt_multeItems.push_back(std::make_pair("",pt_singleItem));
+	pt_reqInfo.add_child("local_maps", pt_multeItems);
+
+	std::stringstream ss;
+	stringifyJSON(ss, pt_reqInfo);
+
+	std::string reqInfo = ss.str();
+	printf("we build json: \n%s\n", reqInfo.c_str());
+
+	strncpy(data, reqInfo.c_str(), reqInfo.size() + 1); 
+
+	return reqInfo.size();
+}
+
+size_t Resolve::setLOTreq(char *data)
+{
+	boost::property_tree::ptree pt_singleItem;
+
+	char vehicleID[5] = "A111";
+
+	pt_singleItem.put("vehicleID", vehicleID);
+
+	std::stringstream ss;
+	stringifyJSON(ss, pt_singleItem);
+
+	std::string reqInfo = ss.str();
+	printf("we build json: \n%ssize: %d", reqInfo.c_str(), reqInfo.size());
+
+	strncpy(data, reqInfo.c_str(), reqInfo.size() + 1); 
+
+	return reqInfo.size();
+}
+
+size_t Resolve::setPATHreq(char *data)
+{
+	boost::property_tree::ptree pt_singleItem;
+	boost::property_tree::ptree pt_reqInfo;
+
+	char vehicleID[5] = "A111";
+	char src_addressType[15] = "entrance";
+	int src_address = 1100000004;
+	char dst_addressType[15] = "parkingSpace";
+	int dst_address = 1100000153;
+
+	pt_reqInfo.put("vehicleID", vehicleID);
+
+	pt_singleItem.put("addressType", src_addressType);
+	pt_singleItem.put("address", src_address);
+	pt_reqInfo.add_child("srcAddress", pt_singleItem);
+	pt_singleItem.clear();
+
+	pt_singleItem.put("addressType", dst_addressType);
+	pt_singleItem.put("address", dst_address);
+	pt_reqInfo.add_child("dstAddress", pt_singleItem);
+	pt_singleItem.clear();
+
+	std::stringstream ss;
+	stringifyJSON(ss, pt_reqInfo);
+
+	std::string reqInfo = ss.str();
+	printf("we build json: \n%ssize: %d", reqInfo.c_str(), reqInfo.size());
+
+	strncpy(data, reqInfo.c_str(), reqInfo.size() + 1); 
+
+	return reqInfo.size();
+}

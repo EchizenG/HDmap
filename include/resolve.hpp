@@ -15,7 +15,9 @@ class Resolve
  	bool parseJSON(const std::string json, boost::property_tree::ptree& messages);
 	bool stringifyJSON(std::stringstream &sendData, const boost::property_tree::ptree pt);
 	bool getMAP(char *bodybuffer);
-
+	size_t setMAPreq(char *data);
+	size_t setLOTreq(char *data);
+	size_t setPATHreq(char *data);
  	~Resolve();
  	
  };

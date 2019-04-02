@@ -133,6 +133,8 @@ enum msg_type
 int main(int argc, char **argv)
 {
 	char *bodybuffer;
+	char reqINFO[1000] = {'\0'};
+	int infoSIZE = 0;
 	Communication TCPcom;
 	Resolve resolver;
 
@@ -140,10 +142,14 @@ int main(int argc, char **argv)
 	TCPcom.setPORT(5050);
 
 	TCPcom.connectTCP();
+	infoSIZE = resolver.setPATHreq(reqINFO);
+	TCPcom.sendREQ(reqINFO, infoSIZE);
+
 	struct Communication::msg_header head = TCPcom.getHEAD();
 	
   bodybuffer = new char[head.body_len + 5];
 	TCPcom.getBODY(bodybuffer, head.body_len);
+
 
 	printf("head: %d\n", head.msg_type);
 	printf("body_len: %d\n", head.body_len);

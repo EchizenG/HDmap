@@ -82,6 +82,18 @@ bool Communication::getBODY(char *data, int size)
 	}
 }
 
+bool Communication::sendREQ(char *data, int size)
+{
+	if(write(conInfo.sHandler, data, size))
+	{
+		return true;
+	}
+	else
+	{
+		printf("can not write request msg, errno: %d\n", errno);
+		return false;
+	}
+}
 
 int Communication::can_open(struct can_hdl **hdl, struct can_cfg *cfg) {
 	int ret;
