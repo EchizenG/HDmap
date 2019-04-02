@@ -114,6 +114,57 @@ bool Resolve::getMAP(char *data)
 	return true;
 }
 
+bool Resolve::getStartParkingInfo(char *data)
+{
+	Resolve parseParking;
+
+  boost::property_tree::ptree parkTree;
+  boost::property_tree::ptree parkTree_startAddress;
+
+  std::string parkTree_vehicleID, parkTree_addressType, parkTree_address;
+
+	parseParking.parseJSON(data, parkTree);
+	parkTree_vehicleID = parkTree.get<std::string>("vehicleID");
+	parkTree_startAddress = parkTree.get_child("start_address");
+
+  parkTree_addressType = parkTree_startAddress.get<std::string>("addressType");
+  parkTree_address = parkTree_startAddress.get<std::string>("address");
+
+  vehicleID = parkTree_vehicleID;
+
+	return true;
+}
+
+bool Resolve::getParkingLotInfo(char *data)
+{
+	Resolve parseParkingLot;
+
+  boost::property_tree::ptree parkTree;
+  boost::property_tree::ptree parkTree_result;
+  boost::property_tree::ptree parkTree_parkingSpacePara;
+
+
+  std::string parkTree_parkingSpaceID, parkTree_parkingSpaceType,
+  						parkTree_length, parkTree_width, parkTree_height;
+
+	parseParking.parseJSON(data, parkTree);
+
+	parkTree_result = parkTree.get_child("result");
+
+  parkTree_parkingSpaceID = parkTree_result.get<std::string>("parkingSpaceID");
+  parkTree_parkingSpacePara = parkTree_parkingSpaceID.get_child("parkingSpacePara");
+  parkTree_parkingSpaceType = parkTree_parkingSpacePara.get<std::string>("address");
+  parkTree_length = parkTree_parkingSpacePara.get<std::string>("length");
+  parkTree_width = parkTree_parkingSpacePara.get<std::string>("width");
+  parkTree_height = parkTree_parkingSpacePara.get<std::string>("height");
+
+	parkLot_length =  std::stoi(parkTree_length);
+	parkLot_width =  std::stoi(parkTree_width);
+	parkLot_height =  std::stoi(parkTree_height);
+
+	return true;
+}
+
 size_t Resolve::setMAPreq(char *data)
 {
   boost::property_tree::ptree pt_singleItem;
@@ -146,7 +197,7 @@ size_t Resolve::setLOTreq(char *data)
 {
 	boost::property_tree::ptree pt_singleItem;
 
-	char vehicleID[5] = "A111";
+	// char vehicleID[5] = "A111";//src: TCP: start parking vehicle req info
 
 	pt_singleItem.put("vehicleID", vehicleID);
 
@@ -166,11 +217,11 @@ size_t Resolve::setPATHreq(char *data)
 	boost::property_tree::ptree pt_singleItem;
 	boost::property_tree::ptree pt_reqInfo;
 
-	char vehicleID[5] = "A111";
-	char src_addressType[15] = "entrance";
-	int src_address = 1100000004;
+	char vehicleID[5] = "A111";//src: TCP: start parking vehicle req info
+	char src_addressType[15] = "locPoint";//src: 
+	int src_address = 1100000004;//src: TCP: Huawei position in real-time("address":{"x":6.123,"y":5.123,"z":4.123})
 	char dst_addressType[15] = "parkingSpace";
-	int dst_address = 1100000153;
+	int dst_address = 1100000153;//src: TCP: start parking vehicle req info
 
 	pt_reqInfo.put("vehicleID", vehicleID);
 
