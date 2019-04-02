@@ -3,7 +3,6 @@
 #include "communication.hpp"
 #include "search.hpp"
 #include "resolve.hpp"
-#include "HDmap.hpp"
 
 /*THIS IS FOR CAN
 int main(int argc, char **argv)

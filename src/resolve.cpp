@@ -130,7 +130,7 @@ bool Resolve::getStartParkingInfo(char *data)
   parkTree_addressType = parkTree_startAddress.get<std::string>("addressType");
   parkTree_address = parkTree_startAddress.get<std::string>("address");
 
-  vehicleID = parkTree_vehicleID;
+  strncpy(vehicleID, parkTree_vehicleID.c_str(), 5);
 
 	return true;
 }
@@ -147,13 +147,13 @@ bool Resolve::getParkingLotInfo(char *data)
   std::string parkTree_parkingSpaceID, parkTree_parkingSpaceType,
   						parkTree_length, parkTree_width, parkTree_height;
 
-	parseParking.parseJSON(data, parkTree);
+	parseParkingLot.parseJSON(data, parkTree);
 
 	parkTree_result = parkTree.get_child("result");
 
   parkTree_parkingSpaceID = parkTree_result.get<std::string>("parkingSpaceID");
-  parkTree_parkingSpacePara = parkTree_parkingSpaceID.get_child("parkingSpacePara");
-  parkTree_parkingSpaceType = parkTree_parkingSpacePara.get<std::string>("address");
+  parkTree_parkingSpacePara = parkTree_result.get_child("parkingSpacePara");
+  parkTree_parkingSpaceType = parkTree_parkingSpacePara.get<std::string>("parkingSpaceType");
   parkTree_length = parkTree_parkingSpacePara.get<std::string>("length");
   parkTree_width = parkTree_parkingSpacePara.get<std::string>("width");
   parkTree_height = parkTree_parkingSpacePara.get<std::string>("height");
@@ -163,6 +163,55 @@ bool Resolve::getParkingLotInfo(char *data)
 	parkLot_height =  std::stoi(parkTree_height);
 
 	return true;
+}
+
+bool Resolve::getPath(char *data)
+{
+	Resolve parsePath;
+
+  boost::property_tree::ptree::iterator ite;
+  boost::property_tree::ptree pathTree;
+  boost::property_tree::ptree pathTree_result;
+  boost::property_tree::ptree pathTree_point;
+  boost::property_tree::ptree pathTree_paths;
+  boost::property_tree::ptree pathTree_singlePath;
+
+  std::string pathTree_srcX, pathTree_srcY, pathTree_srcZ,
+  						pathTree_pathID,
+  						pathTree_dstX, pathTree_dstY, pathTree_dstZ;
+
+	parsePath.parseJSON(data, pathTree);
+
+	pathTree_result = pathTree.get_child("result");
+
+  pathTree_point = pathTree_result.get_child("start_point");
+  pathTree_srcX = pathTree_point.get<std::string>("x");
+  pathTree_srcY = pathTree_point.get<std::string>("y");
+  pathTree_srcZ = pathTree_point.get<std::string>("z");
+  pathTree_point.clear();
+
+  pathTree_point = pathTree_result.get_child("end_point");
+  pathTree_dstX = pathTree_point.get<std::string>("x");
+  pathTree_dstY = pathTree_point.get<std::string>("y");
+  pathTree_dstZ = pathTree_point.get<std::string>("z");
+  pathTree_point.clear();
+
+  pathTree_paths = pathTree_result.get_child("lanes");
+
+	for(ite = pathTree_paths.begin(); ite != pathTree_paths.end(); ite++)
+	{
+	  pathTree_singlePath = ite->second;
+	  pathTree_pathID = pathTree_singlePath.get<std::string>("lane_id");
+	
+		pathIDs.push_back(std::stoi(pathTree_pathID));
+	}
+
+	return true;
+}
+
+std::vector<int64_t> Resolve::getPathIDs(void)
+{
+	return pathIDs;
 }
 
 size_t Resolve::setMAPreq(char *data)

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 #include "boost/property_tree/ptree.hpp"
 
 
@@ -10,6 +11,7 @@
 class Resolve
 {
 public:
+
 	Resolve();
 	~Resolve();
 
@@ -18,12 +20,18 @@ public:
 	bool getMAP(char *bodybuffer);
 	bool getStartParkingInfo(char *data);
 	bool getParkingLotInfo(char *data);
+	bool getPath(char *data);
 
 	size_t setMAPreq(char *data);
 	size_t setLOTreq(char *data);
 	size_t setPATHreq(char *data);
 
+	std::vector<int64_t> getPathIDs(void);
+
 private:
+	
+	std::vector<int64_t> pathIDs;
+
 	char vehicleID[5];
 	int parkLot_length, parkLot_width, parkLot_height;
 	
