@@ -58,7 +58,6 @@ struct Communication::msg_header Communication::getHEAD(void)
 	{
 		header.msg_type = buffer[0];
 		header.body_len = ( ( buffer[5] & 0xff) << 24 ) + ( ( buffer[6] & 0xff ) << 16 ) + ((buffer[7] & 0xff) << 8) + (buffer[8] & 0xff);
-		// header = (struct msg_header*)buffer;
 
 		return header;
 	}

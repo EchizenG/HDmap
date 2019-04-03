@@ -18,9 +18,10 @@ public:
 	bool parseJSON(const std::string json, boost::property_tree::ptree& messages);
 	bool stringifyJSON(std::stringstream &sendData, const boost::property_tree::ptree pt);
 	bool getMAP(char *bodybuffer);
-	bool getStartParkingInfo(char *data);
-	bool getParkingLotInfo(char *data);
-	bool getPath(char *data);
+	bool parseStartParkingInfo(char *data);
+	bool parseParkingLotInfo(char *data);
+	bool parsePath(char *data);
+	bool parsePos(char *data);
 
 	size_t setMAPreq(char *data);
 	size_t setLOTreq(char *data);
@@ -34,6 +35,7 @@ private:
 
 	char vehicleID[5];
 	int parkLot_length, parkLot_width, parkLot_height;
+	double pos_X, pos_Y, pos_Z, pos_heading, pos_speed;
 	
 };
 #endif //define _RESOLVE_HPP

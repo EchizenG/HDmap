@@ -7,195 +7,188 @@
 /*THIS IS FOR CAN
 int main(int argc, char **argv)
 {
-	struct Communication::can_hdl *hdl;
-	struct Communication::can_cfg cfg;
-	struct can_frame rcvd_frame;
-	struct can_frame sent_frame;
-	int ret = 0;
-	char interface[5];
+  struct Communication::can_hdl *hdl;
+  struct Communication::can_cfg cfg;
+  struct can_frame rcvd_frame;
+  struct can_frame sent_frame;
+  int ret = 0;
+  char interface[5];
 
-	sprintf(interface,"can%d",argv[1]);
-	cfg.ifname = interface;
+  sprintf(interface,"can%d",argv[1]);
+  cfg.ifname = interface;
 
-	ret = Communication::can_open(&hdl, &cfg);
+  ret = Communication::can_open(&hdl, &cfg);
 
-	if(0 != ret){
-		printf("can not open can, errno: %d\n", errno);
-	}
+  if(0 != ret){
+    printf("can not open can, errno: %d\n", errno);
+  }
 
-	Communication::can_read(hdl, &rcvd_frame);
+  Communication::can_read(hdl, &rcvd_frame);
 
-	printf("rcvd_frame: %x:%s\n",rcvd_frame.can_id, rcvd_frame.data);
+  printf("rcvd_frame: %x:%s\n",rcvd_frame.can_id, rcvd_frame.data);
 
-	sent_frame.can_id = 0x777;
-	sent_frame.can_dlc = 8;
-	sent_frame.data[0] = 0x00;
-	sent_frame.data[1] = 0x01;
-	sent_frame.data[2] = 0x02;
-	sent_frame.data[3] = 0x03;
-	sent_frame.data[4] = 0x04;
-	sent_frame.data[5] = 0x05;
-	sent_frame.data[6] = 0x06;
-	sent_frame.data[7] = 0x07;
-	Communication::can_write(hdl, &sent_frame);
+  sent_frame.can_id = 0x777;
+  sent_frame.can_dlc = 8;
+  sent_frame.data[0] = 0x00;
+  sent_frame.data[1] = 0x01;
+  sent_frame.data[2] = 0x02;
+  sent_frame.data[3] = 0x03;
+  sent_frame.data[4] = 0x04;
+  sent_frame.data[5] = 0x05;
+  sent_frame.data[6] = 0x06;
+  sent_frame.data[7] = 0x07;
+  Communication::can_write(hdl, &sent_frame);
 
 
-	ret = Communication::can_close(&hdl);
-	if(0 != ret){
-		printf("can not close can, errno: %d\n", errno);
-	}
+  ret = Communication::can_close(&hdl);
+  if(0 != ret){
+    printf("can not close can, errno: %d\n", errno);
+  }
 }
 */
 /*THIS IS FOR SEARCHING
 int main(int argc, char **argv)
 {
-	char mapDirectory[30] = "./bin/oushangPark.sqlite";
+  char mapDirectory[30] = "./bin/oushangPark.sqlite";
 
-	//Search::findParkingLot(parkingID,pDataManager);
-	//Search::findPathLine(pDataManager);
-	//Search::findObstacle(pDataManager);
-	double curPos[2];
-	curPos[0] = 84.0;
-	curPos[1] = 92.0;
+  //Search::findParkingLot(parkingID,pDataManager);
+  //Search::findPathLine(pDataManager);
+  //Search::findObstacle(pDataManager);
+  double curPos[2];
+  curPos[0] = 84.0;
+  curPos[1] = 92.0;
 
-	double raidus = 5.0;
-	// ID = 1100000005;
+  double raidus = 5.0;
+  // ID = 1100000005;
 
-	Search searchTEST;
-	searchTEST.loadMap(mapDirectory);
-	searchTEST.SetPosition(curPos);
-	searchTEST.SetRadius(raidus);
-	searchTEST.SetPathID(1100000073);
-	searchTEST.SetPathID(1100000074);
-	searchTEST.SetPathID(1100000016);
+  Search searchTEST;
+  searchTEST.loadMap(mapDirectory);
+  searchTEST.SetPosition(curPos);
+  searchTEST.SetRadius(raidus);
+  searchTEST.SetPathID(1100000073);
+  searchTEST.SetPathID(1100000074);
+  searchTEST.SetPathID(1100000016);
 
 
-	searchTEST.findHLane();
+  searchTEST.findHLane();
 
-	return 0;
+  return 0;
 }
 */
 
 /*THIS IS FOR JSON
 int main(int argc, char **argv)
 {
-	
-	Communication tcpCON;
+  
+  Communication tcpCON;
 
-	tcpCON.setIP((char *)"192.168.3.191");
-	tcpCON.setPORT(5050);
+  tcpCON.setIP((char *)"192.168.3.191");
+  tcpCON.setPORT(5050);
 
-	char jsondata[1000] = {'0'};
+  char jsondata[1000] = {'0'};
 
-	tcpCON.connectTCP();
-	int head = tcpCON.getHEAD();
-	printf("head: %d\n", head);
+  tcpCON.connectTCP();
+  int head = tcpCON.getHEAD();
+  printf("head: %d\n", head);
 
-	tcpCON.getBODY(jsondata);
-	printf("jsondata: %s\n",jsondata);
+  tcpCON.getBODY(jsondata);
+  printf("jsondata: %s\n",jsondata);
 
 
-	std::string inputJSON;
-	inputJSON = jsondata;
+  std::string inputJSON;
+  inputJSON = jsondata;
 
-	Resolve parser;
-	boost::property_tree::ptree resolvedJSON;
+  Resolve parser;
+  boost::property_tree::ptree resolvedJSON;
 
-	parser.parseJSON(inputJSON, resolvedJSON);
-		
-	boost::property_tree::ptree start_address;
-	start_address = resolvedJSON.get_child("start_address");
-	string addtype = start_address.get<string>("addressType");
-	
-	printf("addtype: %s\n", addtype.c_str());
+  parser.parseJSON(inputJSON, resolvedJSON);
+    
+  boost::property_tree::ptree start_address;
+  start_address = resolvedJSON.get_child("start_address");
+  string addtype = start_address.get<string>("addressType");
+  
+  printf("addtype: %s\n", addtype.c_str());
 
-	return 0;
+  return 0;
 }
 */
 enum msg_type
 {
-  	OBU_MSG_START_PARK_NOTIFY =0x0,	// 0x0启动泊车通知
-	OBU_MSG_MAP_REQ,		     		    // 0x1地图文件请求
-	OBU_MSG_MAP_RSP,     		  		  // 0x2地图文件响应
-	OBU_MSG_PARKING_SPACE_REQ,	    // 0x3申请停车位请求
-	OBU_MSG_PARKING_SPACE_RSP,      // 0x4申请停车位响应
-	OBU_MSG_GLOBAL_PATH_REQ, 		    // 0x5 全局路径规划请求
-  	OBU_MSG_GLOBAL_PATH_RSP, 		    // 0x6 全局路径规划响应
-  	OBU_MSG_CAR_POS_REQ,	    	  	// 0x7 车辆位置请求
-  	OBU_MSG_CAR_POS_RSP,	    		  // 0x8 车辆位置响应
-  	OBU_MSG_CAR_POS_NOTIFY,	    	  // 0x9 车辆位置通知
-  	OBU_MSG_BARRIERS_NOTIFY,			  // 0xA 障碍物列表通知
-  	OBU_MSG_APA_STATUS_NOTIFY,		  // 0xB APA状态通知
-  	OBU_MSG_APA_COMMAND			        // 0xC APA命令下发
+  OBU_MSG_START_PARK_NOTIFY =0x0, // 0x0启动泊车通知
+  OBU_MSG_MAP_REQ,                // 0x1地图文件请求
+  OBU_MSG_MAP_RSP,                // 0x2地图文件响应
+  OBU_MSG_PARKING_SPACE_REQ,      // 0x3申请停车位请求
+  OBU_MSG_PARKING_SPACE_RSP,      // 0x4申请停车位响应
+  OBU_MSG_GLOBAL_PATH_REQ,        // 0x5 全局路径规划请求
+  OBU_MSG_GLOBAL_PATH_RSP,        // 0x6 全局路径规划响应
+  OBU_MSG_CAR_POS_REQ,            // 0x7 车辆位置请求
+  OBU_MSG_CAR_POS_RSP,            // 0x8 车辆位置响应
+  OBU_MSG_CAR_POS_NOTIFY,         // 0x9 车辆位置通知
+  OBU_MSG_BARRIERS_NOTIFY,        // 0xA 障碍物列表通知
+  OBU_MSG_APA_STATUS_NOTIFY,      // 0xB APA状态通知
+  OBU_MSG_APA_COMMAND             // 0xC APA命令下发
 };
 
 int main(int argc, char **argv)
 {
-	char *bodybuffer;
-	char reqINFO[1000] = {'\0'};
-	int infoSIZE = 0;
-	Communication TCPcom;
-	Resolve resolver;
+  char *bodybuffer;
+  char reqINFO[1000] = {'\0'};
+  int infoSIZE = 0;
+  Communication TCPcom;
+  Resolve resolver;
 
-	TCPcom.setIP((char *)"192.168.3.191");
-	TCPcom.setPORT(5050);
+  TCPcom.setIP((char *)"192.168.3.191");
+  TCPcom.setPORT(5050);
 
-	TCPcom.connectTCP();
-	infoSIZE = resolver.setPATHreq(reqINFO);
-	TCPcom.sendREQ(reqINFO, infoSIZE);
+  TCPcom.connectTCP();
+  infoSIZE = resolver.setPATHreq(reqINFO);
+  TCPcom.sendREQ(reqINFO, infoSIZE);
 
-	struct Communication::msg_header head = TCPcom.getHEAD();
-	
+  struct Communication::msg_header head = TCPcom.getHEAD();
+  
   bodybuffer = new char[head.body_len + 5];
-	TCPcom.getBODY(bodybuffer, head.body_len);
+  TCPcom.getBODY(bodybuffer, head.body_len);
 
 
-	printf("head: %d\n", head.msg_type);
-	printf("body_len: %d\n", head.body_len);
+  printf("head: %d\n", head.msg_type);
+  printf("body_len: %d\n", head.body_len);
 
-	switch(head.msg_type)
-	{
-		case OBU_MSG_START_PARK_NOTIFY:
+  switch(head.msg_type)
+  {
+    case OBU_MSG_START_PARK_NOTIFY:
+      resolver.parseStartParkingInfo(bodybuffer);
+      break;
 
-		break;
-		case OBU_MSG_MAP_REQ:
-		
-		break;
-		case OBU_MSG_MAP_RSP:
-		resolver.getMAP(bodybuffer);
+    case OBU_MSG_MAP_RSP:
+      resolver.getMAP(bodybuffer);
+      break;
 
-		break;
-		case OBU_MSG_PARKING_SPACE_REQ:
-		break;
-		case OBU_MSG_PARKING_SPACE_RSP:
+    case OBU_MSG_PARKING_SPACE_RSP:
+      resolver.parseParkingLotInfo(bodybuffer);
+      break;
 
-		break;
-		case OBU_MSG_GLOBAL_PATH_REQ:
-
-    break;
     case OBU_MSG_GLOBAL_PATH_RSP:
+      resolver.parsePath(bodybuffer);
+      break;
 
-    break;
-    case OBU_MSG_CAR_POS_REQ:
-
-    break;
     case OBU_MSG_CAR_POS_RSP:
+      resolver.parsePos(bodybuffer);
+      break;
 
-    break;
     case OBU_MSG_CAR_POS_NOTIFY:
+      break;
 
-    break;
     case OBU_MSG_BARRIERS_NOTIFY:
+      break;
 
-    break;
     case OBU_MSG_APA_STATUS_NOTIFY:
+      break;
 
-    break;
     case OBU_MSG_APA_COMMAND:
+      break;
 
-    break;
-	}
+  }
 
-	delete bodybuffer;
-	return 0;
+  delete bodybuffer;
+  return 0;
 }

@@ -114,7 +114,7 @@ bool Resolve::getMAP(char *data)
 	return true;
 }
 
-bool Resolve::getStartParkingInfo(char *data)
+bool Resolve::parseStartParkingInfo(char *data)
 {
 	Resolve parseParking;
 
@@ -135,7 +135,7 @@ bool Resolve::getStartParkingInfo(char *data)
 	return true;
 }
 
-bool Resolve::getParkingLotInfo(char *data)
+bool Resolve::parseParkingLotInfo(char *data)
 {
 	Resolve parseParkingLot;
 
@@ -165,7 +165,7 @@ bool Resolve::getParkingLotInfo(char *data)
 	return true;
 }
 
-bool Resolve::getPath(char *data)
+bool Resolve::parsePath(char *data)
 {
 	Resolve parsePath;
 
@@ -205,6 +205,39 @@ bool Resolve::getPath(char *data)
 	
 		pathIDs.push_back(std::stoi(pathTree_pathID));
 	}
+
+	return true;
+}
+
+
+bool Resolve::parsePos(char *data)
+{
+	Resolve parsePos;
+
+  boost::property_tree::ptree posTree;
+  boost::property_tree::ptree posTree_result;
+  boost::property_tree::ptree posTree_localtion;
+
+  std::string posTree_locX, posTree_locY, posTree_locZ,
+  						posTree_heading, posTree_speed;
+
+	parsePos.parseJSON(data, posTree);
+
+	posTree_result = posTree.get_child("result");
+
+  posTree_localtion = posTree_result.get_child("localtion");
+  posTree_locX = posTree_localtion.get<std::string>("x");
+  posTree_locY = posTree_localtion.get<std::string>("y");
+  posTree_locZ = posTree_localtion.get<std::string>("z");
+
+  posTree_heading = posTree_result.get<std::string>("heading");
+  posTree_speed = posTree_result.get<std::string>("speed");
+
+  pos_X = std::stod(posTree_locX);
+  pos_Y = std::stod(posTree_locY);
+  pos_Z = std::stod(posTree_locZ);
+  pos_heading = std::stod(posTree_heading);
+  pos_speed = std::stod(posTree_speed);
 
 	return true;
 }
