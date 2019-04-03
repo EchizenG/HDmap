@@ -209,35 +209,91 @@ bool Resolve::parsePath(char *data)
 	return true;
 }
 
-
 bool Resolve::parsePos(char *data)
 {
 	Resolve parsePos;
 
   boost::property_tree::ptree posTree;
   boost::property_tree::ptree posTree_result;
-  boost::property_tree::ptree posTree_localtion;
+  boost::property_tree::ptree posTree_location;
 
-  std::string posTree_locX, posTree_locY, posTree_locZ,
+  std::string posTree_vehicleID,
+  						posTree_locX, posTree_locY, posTree_locZ,
   						posTree_heading, posTree_speed;
 
 	parsePos.parseJSON(data, posTree);
 
+	posTree_vehicleID = posTree.get<std::string>("vehicleID");
 	posTree_result = posTree.get_child("result");
 
-  posTree_localtion = posTree_result.get_child("localtion");
-  posTree_locX = posTree_localtion.get<std::string>("x");
-  posTree_locY = posTree_localtion.get<std::string>("y");
-  posTree_locZ = posTree_localtion.get<std::string>("z");
+  posTree_location = posTree_result.get_child("location");
+  posTree_locX = posTree_location.get<std::string>("x");
+  posTree_locY = posTree_location.get<std::string>("y");
+  posTree_locZ = posTree_location.get<std::string>("z");
 
   posTree_heading = posTree_result.get<std::string>("heading");
   posTree_speed = posTree_result.get<std::string>("speed");
 
-  pos_X = std::stod(posTree_locX);
-  pos_Y = std::stod(posTree_locY);
-  pos_Z = std::stod(posTree_locZ);
-  pos_heading = std::stod(posTree_heading);
-  pos_speed = std::stod(posTree_speed);
+  if(0 == posTree_vehicleID.compare(vehicleID))
+  {
+	  pos_X = std::stod(posTree_locX);
+	  pos_Y = std::stod(posTree_locY);
+	  pos_Z = std::stod(posTree_locZ);
+	  pos_heading = std::stod(posTree_heading);
+	  pos_speed = std::stod(posTree_speed);
+	}
+	else
+	{
+		printf("This is not for our vehicle: %s, it is for %s\n", vehicleID, posTree_vehicleID);
+		return false;
+	}
+
+	return true;
+}
+
+
+bool Resolve::parseObjects(char *data)
+{
+	Resolve parseObj;
+
+  boost::property_tree::ptree::iterator ite_obj, ite_loc;
+  boost::property_tree::ptree objTree;
+  boost::property_tree::ptree objTree_multiObjs;
+  boost::property_tree::ptree objTree_singleObj;
+  boost::property_tree::ptree objTree_result;
+  boost::property_tree::ptree objTree_multiLocations;
+  boost::property_tree::ptree objTree_singleLocation;
+
+
+  std::string objTree_objectID, objTree_objectType, objTree_confidence,
+  						objTree_locX, objTree_locY, objTree_locZ,
+  						objTree_heading, objTree_speed;
+
+	parseObj.parseJSON(data, objTree);
+	objTree_multiObjs = objTree.get_child("objects");
+
+	for(ite_obj = objTree_multiObjs.begin(); ite_obj != objTree_multiObjs.end(); ite_obj++)
+	{
+	  objTree_singleObj = ite_obj->second;
+
+	  objTree_objectID = objTree_singleObj.get<std::string>("objectID");
+	  objTree_objectType = objTree_singleObj.get<std::string>("objectType");
+	  objTree_confidence = objTree_singleObj.get<std::string>("confidence");
+	  objTree_heading = objTree_singleObj.get<std::string>("speed");
+	  objTree_speed = objTree_singleObj.get<std::string>("heading");
+	  objTree_multiLocations = objTree_singleObj.get_child("location");
+	
+		for(ite_loc = objTree_multiLocations.begin(); ite_loc != objTree_multiLocations.end(); ite_loc++)
+		{
+			objTree_singleLocation = ite_loc->second;
+
+		  objTree_locX = objTree_singleLocation.get<std::string>("x");
+		  objTree_locY = objTree_singleLocation.get<std::string>("y");
+		  objTree_locZ = objTree_singleLocation.get<std::string>("z");
+
+		  //TODO: define a vessel to contain the object
+		}
+	}
 
 	return true;
 }

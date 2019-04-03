@@ -22,7 +22,8 @@ public:
 	bool parseParkingLotInfo(char *data);
 	bool parsePath(char *data);
 	bool parsePos(char *data);
-
+	bool parseObjects(char *data);
+	
 	size_t setMAPreq(char *data);
 	size_t setLOTreq(char *data);
 	size_t setPATHreq(char *data);

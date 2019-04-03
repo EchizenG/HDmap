@@ -172,10 +172,10 @@ int main(int argc, char **argv)
       break;
 
     case OBU_MSG_CAR_POS_RSP:
-      resolver.parsePos(bodybuffer);
       break;
 
     case OBU_MSG_CAR_POS_NOTIFY:
+      resolver.parsePos(bodybuffer);
       break;
 
     case OBU_MSG_BARRIERS_NOTIFY:
