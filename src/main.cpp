@@ -178,10 +178,12 @@ int main(int argc, char **argv)
       resolver.parsePos(bodybuffer);
       break;
 
-    case OBU_MSG_BARRIERS_NOTIFY:
+    case OBU_MSG_BARRIERS_NOTIFY: 
+      resolver.parseObjects(bodybuffer);
       break;
 
     case OBU_MSG_APA_STATUS_NOTIFY:
+      resolver.parseAPAStatus(bodybuffer);
       break;
 
     case OBU_MSG_APA_COMMAND:

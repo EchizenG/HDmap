@@ -209,6 +209,11 @@ bool Resolve::parsePath(char *data)
 	return true;
 }
 
+std::vector<int64_t> Resolve::getPathIDs(void)
+{
+	return pathIDs;
+}
+
 bool Resolve::parsePos(char *data)
 {
 	Resolve parsePos;
@@ -298,9 +303,30 @@ bool Resolve::parseObjects(char *data)
 	return true;
 }
 
-std::vector<int64_t> Resolve::getPathIDs(void)
+
+bool Resolve::parseAPAStatus(char *data)
 {
-	return pathIDs;
+	Resolve parseAPASta;
+
+  boost::property_tree::ptree statuAPATree;
+
+  std::string statuAPATree_parkingFinished,
+  						statuAPATree_callingFinished,
+  						statuAPATree_okline,
+  						statuAPATree_findingstopline,
+  						statuAPATree_stopline,
+  						statuAPATree_parking;
+
+	parseAPASta.parseJSON(data, statuAPATree);
+
+	statuAPATree_parkingFinished = statuAPATree.get<std::string>("parkingFinished");
+  statuAPATree_callingFinished = statuAPATree.get<std::string>("callingFinished");
+  statuAPATree_okline = statuAPATree.get<std::string>("okline");
+	statuAPATree_findingstopline = statuAPATree.get<std::string>("findingstopline");
+  statuAPATree_stopline = statuAPATree.get<std::string>("stopline");
+  statuAPATree_parking = statuAPATree.get<std::string>("parking");
+
+	return true;
 }
 
 size_t Resolve::setMAPreq(char *data)
