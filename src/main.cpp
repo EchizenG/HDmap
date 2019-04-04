@@ -1,14 +1,15 @@
 #include <errno.h>
 #include <stdio.h>
-#include "communication.hpp"
+#include "TCPcommunication.hpp"
+#include "CANcommunication.hpp"
 #include "search.hpp"
 #include "resolve.hpp"
 
 /*THIS IS FOR CAN
 int main(int argc, char **argv)
 {
-  struct Communication::can_hdl *hdl;
-  struct Communication::can_cfg cfg;
+  struct TCPcommunication::can_hdl *hdl;
+  struct TCPcommunication::can_cfg cfg;
   struct can_frame rcvd_frame;
   struct can_frame sent_frame;
   int ret = 0;
@@ -17,13 +18,13 @@ int main(int argc, char **argv)
   sprintf(interface,"can%d",argv[1]);
   cfg.ifname = interface;
 
-  ret = Communication::can_open(&hdl, &cfg);
+  ret = TCPcommunication::can_open(&hdl, &cfg);
 
   if(0 != ret){
     printf("can not open can, errno: %d\n", errno);
   }
 
-  Communication::can_read(hdl, &rcvd_frame);
+  TCPcommunication::can_read(hdl, &rcvd_frame);
 
   printf("rcvd_frame: %x:%s\n",rcvd_frame.can_id, rcvd_frame.data);
 
@@ -37,10 +38,10 @@ int main(int argc, char **argv)
   sent_frame.data[5] = 0x05;
   sent_frame.data[6] = 0x06;
   sent_frame.data[7] = 0x07;
-  Communication::can_write(hdl, &sent_frame);
+  TCPcommunication::can_write(hdl, &sent_frame);
 
 
-  ret = Communication::can_close(&hdl);
+  ret = TCPcommunication::can_close(&hdl);
   if(0 != ret){
     printf("can not close can, errno: %d\n", errno);
   }
@@ -80,7 +81,7 @@ int main(int argc, char **argv)
 int main(int argc, char **argv)
 {
   
-  Communication tcpCON;
+  TCPcommunication tcpCON;
 
   tcpCON.setIP((char *)"192.168.3.191");
   tcpCON.setPORT(5050);
@@ -129,12 +130,148 @@ enum msg_type
   OBU_MSG_APA_COMMAND             // 0xC APA命令下发
 };
 
+int TCPflag = 0;
+int sendReqFlag = 0;
+
+void keepConnect_thread(void)
+{
+  TCPcommunication *Contact = TCPcommunication::getInstance();
+
+  Contact->setIP((char *)"192.168.3.191");
+  Contact->setPORT(5050);
+
+  do {
+    if(true == Contact->connectTCP())
+    {
+      TCPflag = 0;
+      sleep(2);
+    }
+  }while(TCPflag == ECONNRESET);
+}
+
+void sendData_thread(void)
+{
+  int infoSIZE = 0;
+  char reqINFO[1000] = {'\0'};
+
+  TCPcommunication *Contact = TCPcommunication::getInstance();
+  Resolve *resolver = Resolve::getInstance();
+
+  while(1)
+  {
+    switch(resolver->getFlag())
+    {
+      case OBU_MSG_MAP_REQ:
+        infoSIZE = resolver->setMAPreq(reqINFO);
+        Contact->sendREQ(reqINFO, infoSIZE);
+        break;
+
+      case OBU_MSG_PARKING_SPACE_REQ:
+        infoSIZE = resolver->setLOTreq(reqINFO);
+        Contact->sendREQ(reqINFO, infoSIZE);
+        break;
+
+      case OBU_MSG_GLOBAL_PATH_REQ:
+        infoSIZE = resolver->setPATHreq(reqINFO);
+        Contact->sendREQ(reqINFO, infoSIZE);
+        break;
+    }
+  }
+}
+
+void recvData_thread(void)
+{
+  TCPcommunication *Contact = TCPcommunication::getInstance();
+  Resolve *resolver = Resolve::getInstance();
+
+  while(1)
+  {
+    TCPflag = Contact->parseHEAD();
+
+    if(0 != TCPflag)
+    {
+      exit(1);
+    }
+
+    struct TCPcommunication::msg_header head;
+    char *bodybuffer;
+
+    head = Contact->getHEAD();
+
+    bodybuffer = new char[head.body_len + 5];
+    Contact->getBODY(bodybuffer, head.body_len);
+
+    // printf("head: %d\n", head.msg_type);
+    // printf("body_len: %d\n", head.body_len);
+
+    switch(head.msg_type)
+    {
+      case OBU_MSG_START_PARK_NOTIFY:
+        resolver->parseStartParkingInfo(bodybuffer);
+        resolver->setFlag(OBU_MSG_MAP_REQ);
+        break;
+
+      case OBU_MSG_MAP_RSP:
+        resolver->getMAP(bodybuffer);
+        resolver->setFlag(OBU_MSG_PARKING_SPACE_REQ);
+        break;
+
+      case OBU_MSG_PARKING_SPACE_RSP:
+        resolver->parseParkingLotInfo(bodybuffer);
+        resolver->setFlag(OBU_MSG_GLOBAL_PATH_REQ);
+        break;
+
+      case OBU_MSG_GLOBAL_PATH_RSP:
+        resolver->parsePath(bodybuffer);
+        break;
+
+      case OBU_MSG_CAR_POS_NOTIFY:
+        resolver->parsePos(bodybuffer);
+        break;
+
+      case OBU_MSG_BARRIERS_NOTIFY: 
+        resolver->parseObjects(bodybuffer);
+        break;
+
+      case OBU_MSG_APA_STATUS_NOTIFY:
+        resolver->parseAPAStatus(bodybuffer);
+        break;
+    }
+  }
+}
+
+void sendCAN_thread(void)
+{
+  CANcommunication *Contact = CANcommunication::getInstance();
+  Search *searcher = Search::getInstance();
+
+  while(1)
+  {
+    Contact->stringifyCAN(searcher->getHLanePoints());
+    Contact->sendCAN();
+  }
+}
+
+int main(int argc, char **argv)
+{
+  std::thread conTCP(keepConnect_thread);
+  std::thread sendData(sendData_thread);
+  std::thread recvData(recvData_thread);
+  std::thread sendCAN(sendCAN_thread);
+
+  conTCP.join();
+  sendData.join();
+  recvData.join();
+  sendCAN.join();
+
+}
+/*THIS is for test
 int main(int argc, char **argv)
 {
   char *bodybuffer;
   char reqINFO[1000] = {'\0'};
   int infoSIZE = 0;
-  Communication TCPcom;
+  TCPcommunication TCPcom;
   Resolve resolver;
 
   TCPcom.setIP((char *)"192.168.3.191");
@@ -144,14 +281,15 @@ int main(int argc, char **argv)
   infoSIZE = resolver.setPATHreq(reqINFO);
   TCPcom.sendREQ(reqINFO, infoSIZE);
 
-  struct Communication::msg_header head = TCPcom.getHEAD();
+  while(1){
+  struct TCPcommunication::msg_header head = TCPcom.getHEAD();
   
   bodybuffer = new char[head.body_len + 5];
   TCPcom.getBODY(bodybuffer, head.body_len);
 
 
-  printf("head: %d\n", head.msg_type);
-  printf("body_len: %d\n", head.body_len);
+  // printf("head: %d\n", head.msg_type);
+  // printf("body_len: %d\n", head.body_len);
 
   switch(head.msg_type)
   {
@@ -171,9 +309,6 @@ int main(int argc, char **argv)
       resolver.parsePath(bodybuffer);
       break;
 
-    case OBU_MSG_CAR_POS_RSP:
-      break;
-
     case OBU_MSG_CAR_POS_NOTIFY:
       resolver.parsePos(bodybuffer);
       break;
@@ -185,12 +320,11 @@ int main(int argc, char **argv)
     case OBU_MSG_APA_STATUS_NOTIFY:
       resolver.parseAPAStatus(bodybuffer);
       break;
-
-    case OBU_MSG_APA_COMMAND:
-      break;
-
+  }
   }
 
   delete bodybuffer;
   return 0;
 }
+*/
+

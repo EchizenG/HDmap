@@ -232,6 +232,7 @@ bool Search::findHLane(void)
   if(buildHLane(pLayer))
   {
     getNearest(Position);
+    getNPointsFromHere(30);
     return true;
   }
   else
@@ -410,12 +411,18 @@ bool Search::getNPointsFromHere(const int number)
 
   for(int i; i < number; i++)
   {
-    point.setX(nearHDPoint[2]+i);
-    point.setY(nearHDPoint[2]+i);
+    point.setX(nearHDPoint[0]+i);
+    point.setY(nearHDPoint[1]+i);
     vPoints.push_back(point);
   }
 
   return true;
+}
+
+std::vector<OGRPoint> Search::getHLanePoints(void)
+{
+  std::unique_lock<std::mutex> lockTmp(SEAmutex);
+  return vPoints;
 }
 
 

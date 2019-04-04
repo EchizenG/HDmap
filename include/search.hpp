@@ -3,12 +3,16 @@
 
 #include <iostream>
 #include <kdtree.h>
+#include <mutex>
 #include "dataManager/datamanager.h"
 
 class Search
 {
 public:
-  Search();
+  static Search* getInstance(){
+        static Search instance;
+        return &instance;
+    }
 
   bool loadMap(char *mapDirectory);
   bool findParkingLot(void);
@@ -20,21 +24,25 @@ public:
   bool SetPosition(const double *curPosition);
   bool SetRadius(const double curradius);
   bool SetPathID(const OID curID);
-  bool getNearest(const double *curPos);
   bool getNPointsFromHere(const int number);
 
 
   struct parkinglot GetParkinglot(void);
   struct obstacle GetObstacle(void);
   struct hlane GetHLane(void);
+  std::vector<OGRPoint> getHLanePoints(void);
 
   ~Search();
 private:
+  Search();
+  Search(const Search &other);
+
   bool buildHLane(ILayer *pLayer);
   bool buildHLaneFromPathline(ILayer *pLayer);
   bool buildHLaneGeneralInfo(void);
   bool buildHLaneStruct(OGRFeature *pOGRFeature);
   bool buildNavPointsKDtree(void);
+  bool getNearest(const double *curPos);
 
   DataManager *pDataManager;
 
@@ -99,6 +107,8 @@ private:
   std::vector<OID> pathIDs;
   std::vector<IFeature*> vHLaneFeatures;
   std::vector<OGRPoint> vPoints;
+
+  std::mutex SEAmutex;
 
 };
 #endif //define _SEARCH_HPP_

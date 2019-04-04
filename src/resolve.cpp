@@ -6,6 +6,7 @@
 #include <fstream>
 #include <errno.h>
 #include <unistd.h>
+#include <time.h>
 
 #include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/binary_from_base64.hpp>
@@ -129,8 +130,10 @@ bool Resolve::parseStartParkingInfo(char *data)
 
   parkTree_addressType = parkTree_startAddress.get<std::string>("addressType");
   parkTree_address = parkTree_startAddress.get<std::string>("address");
-
+	
+	Resolve_mutex.lock();
   strncpy(vehicleID, parkTree_vehicleID.c_str(), 5);
+	Resolve_mutex.unlock();
 
 	return true;
 }
@@ -158,9 +161,11 @@ bool Resolve::parseParkingLotInfo(char *data)
   parkTree_width = parkTree_parkingSpacePara.get<std::string>("width");
   parkTree_height = parkTree_parkingSpacePara.get<std::string>("height");
 
-	parkLot_length =  std::stoi(parkTree_length);
-	parkLot_width =  std::stoi(parkTree_width);
-	parkLot_height =  std::stoi(parkTree_height);
+  Resolve_mutex.lock();
+	parkLot_length = std::stoi(parkTree_length);
+	parkLot_width = std::stoi(parkTree_width);
+	parkLot_height = std::stoi(parkTree_height);
+	Resolve_mutex.unlock();
 
 	return true;
 }
@@ -198,6 +203,7 @@ bool Resolve::parsePath(char *data)
 
   pathTree_paths = pathTree_result.get_child("lanes");
 
+  Resolve_mutex.lock();
 	for(ite = pathTree_paths.begin(); ite != pathTree_paths.end(); ite++)
 	{
 	  pathTree_singlePath = ite->second;
@@ -205,12 +211,14 @@ bool Resolve::parsePath(char *data)
 	
 		pathIDs.push_back(std::stoi(pathTree_pathID));
 	}
+	Resolve_mutex.unlock();
 
 	return true;
 }
 
 std::vector<int64_t> Resolve::getPathIDs(void)
 {
+	std::unique_lock<std::mutex> lockTmp(Resolve_mutex);
 	return pathIDs;
 }
 
@@ -241,11 +249,13 @@ bool Resolve::parsePos(char *data)
 
   if(0 == posTree_vehicleID.compare(vehicleID))
   {
+  	Resolve_mutex.lock();
 	  pos_X = std::stod(posTree_locX);
 	  pos_Y = std::stod(posTree_locY);
 	  pos_Z = std::stod(posTree_locZ);
 	  pos_heading = std::stod(posTree_heading);
 	  pos_speed = std::stod(posTree_speed);
+	  Resolve_mutex.unlock();
 	}
 	else
 	{
@@ -277,6 +287,7 @@ bool Resolve::parseObjects(char *data)
 	parseObj.parseJSON(data, objTree);
 	objTree_multiObjs = objTree.get_child("objects");
 
+	//TODO: add mutex
 	for(ite_obj = objTree_multiObjs.begin(); ite_obj != objTree_multiObjs.end(); ite_obj++)
 	{
 	  objTree_singleObj = ite_obj->second;
@@ -306,6 +317,8 @@ bool Resolve::parseObjects(char *data)
 
 bool Resolve::parseAPAStatus(char *data)
 {
+	// std::unique_lock<std::mutex> lockTmp(Resolve_mutex);
+
 	Resolve parseAPASta;
 
   boost::property_tree::ptree statuAPATree;
@@ -326,7 +339,20 @@ bool Resolve::parseAPAStatus(char *data)
   statuAPATree_stopline = statuAPATree.get<std::string>("stopline");
   statuAPATree_parking = statuAPATree.get<std::string>("parking");
 
+  //TODO: add a vessel and mutex
 	return true;
+}
+
+void *Resolve::constructHead(int type, int size)
+{
+	struct msg_header head;
+	time_t timep; 
+	time(&timep); 
+	head.msg_type = type;
+	head.body_len = size;
+	head.timestamp = timep;
+
+	return (void*)&head;
 }
 
 size_t Resolve::setMAPreq(char *data)
@@ -359,6 +385,8 @@ size_t Resolve::setMAPreq(char *data)
 
 size_t Resolve::setLOTreq(char *data)
 {
+	std::unique_lock<std::mutex> lockTmp(Resolve_mutex);
+
 	boost::property_tree::ptree pt_singleItem;
 
 	// char vehicleID[5] = "A111";//src: TCP: start parking vehicle req info
@@ -378,10 +406,12 @@ size_t Resolve::setLOTreq(char *data)
 
 size_t Resolve::setPATHreq(char *data)
 {
+	std::unique_lock<std::mutex> lockTmp(Resolve_mutex);
+
 	boost::property_tree::ptree pt_singleItem;
 	boost::property_tree::ptree pt_reqInfo;
 
-	char vehicleID[5] = "A111";//src: TCP: start parking vehicle req info
+	// char vehicleID[5] = vehicleID;//src: TCP: start parking vehicle req info
 	char src_addressType[15] = "locPoint";//src: 
 	int src_address = 1100000004;//src: TCP: Huawei position in real-time("address":{"x":6.123,"y":5.123,"z":4.123})
 	char dst_addressType[15] = "parkingSpace";
@@ -408,4 +438,16 @@ size_t Resolve::setPATHreq(char *data)
 	strncpy(data, reqInfo.c_str(), reqInfo.size() + 1); 
 
 	return reqInfo.size();
+}
+
+void Resolve::setFlag(int flagValue)
+{
+	std::unique_lock<std::mutex> lockTmp(Resolve_mutex);
+	sendReqFlag = flagValue;
+}
+
+int Resolve::getFlag(void)
+{
+	std::unique_lock<std::mutex> lockTmp(Resolve_mutex);
+	return sendReqFlag;
 }

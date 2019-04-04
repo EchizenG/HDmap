@@ -14,7 +14,7 @@ INCLUDES = -I/usr/include          \
 LIBS = -L./lib -L./kdtree -lemg_dataaccess -lemg_datamanager -logr -lkdtree  #链接库查找地址
 
 CCFLAGS = -g -Wall -Wl,-rpath,./lib    #附加参数
-CCFLAGS += -std=c++11
+CCFLAGS += -std=c++11 -pthread
 
 OUTPUT = ./showPathlineDemo   #输出程序名称
 
