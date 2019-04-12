@@ -14,7 +14,7 @@ public:
         return &instance;
     }
 
-  bool loadMap(char *mapDirectory);
+  bool loadMap(void);
   bool findParkingLot(void);
   bool findPathLine(void);//negotiate
   bool findObstacle(void);//input:position,radius
@@ -23,9 +23,12 @@ public:
   
   bool SetPosition(const double *curPosition);
   bool SetRadius(const double curradius);
-  bool SetPathID(const OID curID);
+  bool SetPathID(const std::vector<OID> pathIDs_parsed);
+  bool SetHLaneID(const std::vector<OID> HLaneIDs_parsed);
   bool getNPointsFromHere(const int number);
 
+//TEMP
+  bool drawWholeHLane(void);
 
   struct parkinglot GetParkinglot(void);
   struct obstacle GetObstacle(void);
@@ -39,12 +42,13 @@ private:
 
   bool buildHLane(ILayer *pLayer);
   bool buildHLaneFromPathline(ILayer *pLayer);
+  bool buildHLaneFromHLaneID(ILayer *pLayer);
+
   bool buildHLaneGeneralInfo(void);
   bool buildHLaneStruct(OGRFeature *pOGRFeature);
   bool buildNavPointsKDtree(void);
   bool getNearest(const double *curPos);
-
-  DataManager *pDataManager;
+  void setParkLotID(int ID);
 
   struct parkinglot
   {
@@ -105,6 +109,7 @@ private:
   OID parkinglotID;
 
   std::vector<OID> pathIDs;
+  std::vector<OID> HLaneIDs;
   std::vector<IFeature*> vHLaneFeatures;
   std::vector<OGRPoint> vPoints;
 

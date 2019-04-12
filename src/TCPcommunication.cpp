@@ -43,11 +43,12 @@ bool TCPcommunication::connectTCP(void)
 {
   std::cout<<"running connectTCP"<<std::endl;
 
-  std::unique_lock<std::mutex> lockTmp(TCPmutex);
+  TCPmutex.lock();
 
   conInfo.sHandler = socket(PF_INET, SOCK_STREAM, 0);
   if(conInfo.sHandler == -1){
-    std::cout << "wrong handler" << errno << std::endl;
+    TCPmutex.unlock();
+    printf("wrong handler: %m\n");
     return false;
   }
   memset(&conInfo.sin, 0, sizeof(conInfo.sin));
@@ -55,35 +56,43 @@ bool TCPcommunication::connectTCP(void)
   conInfo.sin.sin_addr.s_addr = inet_addr(conInfo.IP);
   conInfo.sin.sin_port = htons(conInfo.port);
   if(connect(conInfo.sHandler, (struct sockaddr*) &conInfo.sin, sizeof(conInfo.sin))==-1){
-    std::cout << "connect error" << errno << std::endl;
+    TCPmutex.unlock();
+    printf("connect error:%m\n");
     return false;
   }
   else{
-    std::cout << "connected ...\n" << std::endl;
+    TCPmutex.unlock();
+    printf("connected ...\n");
     return true;
   }
 }
 
-int TCPcommunication::parseHEAD(void)
+bool TCPcommunication::parseHEAD(void)
 {
-  char buffer[18] = {'0'};
+  char buffer[18] = {0x0f};
+  std::unique_lock<std::mutex> lockTmp(TCPmutex);
 
   if(17 == read(conInfo.sHandler,buffer,17))
   {
     header.msg_type = buffer[0];
-    header.body_len = ( ( buffer[5] & 0xff) << 24 ) + ( ( buffer[6] & 0xff ) << 16 ) + ((buffer[7] & 0xff) << 8) + (buffer[8] & 0xff);
-
-    return 0;
+    header.body_len = ( ( buffer[5] & 0xff) << 24 ) +
+                      ( ( buffer[6] & 0xff ) << 16 ) +
+                      ( ( buffer[7] & 0xff) << 8) +
+                      ( buffer[8] & 0xff);
+    TCPmutex.unlock();
+    return true;
   }
   else
   {
-    printf("can not read msg head, errno: %d\n", errno);
-    return errno;
+    TCPmutex.unlock();
+    printf("can not read msg head: %m\n");
+    return false;
   }
 }
 
 struct TCPcommunication::msg_header TCPcommunication::getHEAD(void)
 {
+  std::unique_lock<std::mutex> lockTmp(TCPmutex);
   return header;
 }
 
@@ -93,26 +102,31 @@ bool TCPcommunication::getBODY(char *data, int size)
 
   if(read(conInfo.sHandler, data, size))
   {
+    TCPmutex.unlock();
     return true;
   }
   else
   {
-    printf("can not read msg body, errno: %d\n", errno);
+    TCPmutex.unlock();
+    printf("can not read msg body: %m\n");
     return false;
   }
 }
 
-bool TCPcommunication::sendREQ(char *data, int size)
+bool TCPcommunication::sendREQ(char *head, char *data, int size)
 {
-  std::unique_lock<std::mutex> lockTmp(TCPmutex);
-
-  if(write(conInfo.sHandler, data, size))
+  if(write(conInfo.sHandler, head, 17))
   {
-    return true;
+    if(write(conInfo.sHandler, data, size))
+    {
+      TCPmutex.unlock();
+      return true;
+    }
   }
   else
   {
-    printf("can not write request msg, errno: %d\n", errno);
+    TCPmutex.unlock();
+    printf("can not write request msg: %m\n");
     return false;
   }
 }

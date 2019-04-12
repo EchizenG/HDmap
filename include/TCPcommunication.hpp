@@ -38,12 +38,13 @@ public:
     };
 
     bool                 connectTCP(void);
-    int                  parseHEAD(void);
+    bool                  parseHEAD(void);
     bool                 getBODY(char *data, int size);
     struct msg_header    getHEAD(void);
     void                 setIP(char *IP);
     void                 setPORT(int port);
-    bool                 sendREQ(char *data, int size);
+    bool                 sendREQ(char *head, char *data, int size);
+
 private:
     TCPcommunication();
     

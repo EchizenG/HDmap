@@ -1,6 +1,10 @@
 #include <search.hpp>
 #include <errno.h>
 #include <sys/types.h>
+#include "resolve.hpp"
+
+#include <fstream>
+#include <iostream>
 
 Search::Search()
 {
@@ -28,25 +32,39 @@ bool Search::SetRadius(const double curradius)
   return true;
 }
 
-bool Search::SetPathID(const OID curID)
+bool Search::SetPathID(const std::vector<OID> pathIDs_parsed)
 {
-  pathIDs.push_back(curID);
+  pathIDs = pathIDs_parsed;
+
+  return true;
+}
+
+bool Search::SetHLaneID(const std::vector<OID> HLaneIDs_parsed)
+{
+  HLaneIDs = HLaneIDs_parsed;
 
   return true;
 }
 
 
-bool Search::loadMap(char *mapDirectory)
+bool Search::loadMap(void)
 {
   DataManager *pDataManager = DataManager::getInstance();
+  Resolve *resolver = Resolve::getInstance();
 
-  bool breval = pDataManager->useDB(mapDirectory);
+  bool breval = pDataManager->useDB(resolver->getMAPname());
   if(true == breval){
   	pDataManager->loadData();
+
   	return true;
   }
 
   return false;
+}
+
+void Search::setParkLotID(int ID)
+{
+  parkinglotID = ID;
 }
 
 bool Search::findParkingLot(void)
@@ -86,7 +104,7 @@ bool Search::findParkingLot(void)
       }
       else
       {
-        printf("wrong OGRFeature, can't get OGRFeature, errno: %d\n", errno);
+        printf("wrong OGRFeature, can't get OGRFeature: %m\n");
         return false;
       }
       //get geometry
@@ -101,27 +119,31 @@ bool Search::findParkingLot(void)
       }
       else
       {
-        printf("wrong OGRGeometry, can't get OGRGeometry, errno: %d\n", errno);
+        printf("wrong OGRGeometry, can't get OGRGeometry: %m\n");
         return false;
       }
     }
-    printf("wrong parkingID, can't get feature, errno: %d\n", errno);
+    printf("wrong parkingID, can't get feature: %m\n");
     return false;
   }
-  printf("wrong parkings layer, can't get layer, errno: %d\n", errno);
+  printf("wrong parkings layer, can't get layer: %m\n");
   return false;
 }
 
 bool Search::findPathLine(void)
 {
-  // get layer by layer name
+  DataManager *pDataManager = DataManager::getInstance();
+
   ILayer *pLayer = pDataManager->getLayer("pathline");
+
   if(pLayer)
   {
     printf("layer name: %s,feature count:%d\n",pLayer->GetName().c_str(),(int)pLayer->GetCount());
 
     //get feature
-    IFeature *pFeature = pLayer->GetFeature(1100000046);
+    // IFeature *pFeature = pLayer->GetFeature(1100000046);
+    IFeature *pFeature = pLayer->GetFirst();
+
     while(pFeature)
     {
       //get ogrfeature
@@ -138,13 +160,13 @@ bool Search::findPathLine(void)
         pathLine.WIDTH = pOGRFeature->GetFieldAsInteger("WIDTH");
         pathLine.PBGID = pOGRFeature->GetFieldAsInteger("PBGID");
         printf("LINKID: %d\n",pathLine.LINKID);
-        printf("TYPE: %d\n",pathLine.TYPE);
-        printf("DT: %d\n",pathLine.DT);
-        printf("LENGTH: %d\n",pathLine.LENGTH);
-        printf("FJCID: %d\n",pathLine.FJCID);
-        printf("TJCID: %d\n",pathLine.TJCID);
-        printf("WIDTH: %d\n",pathLine.WIDTH);
-        printf("PBGID: %d\n",pathLine.PBGID);
+        // printf("TYPE: %d\n",pathLine.TYPE);
+        // printf("DT: %d\n",pathLine.DT);
+        // printf("LENGTH: %d\n",pathLine.LENGTH);
+        // printf("FJCID: %d\n",pathLine.FJCID);
+        // printf("TJCID: %d\n",pathLine.TJCID);
+        // printf("WIDTH: %d\n",pathLine.WIDTH);
+        // printf("PBGID: %d\n",pathLine.PBGID);
        
         printf("-----------\n");
       }
@@ -156,11 +178,12 @@ bool Search::findPathLine(void)
           for(int i = 0; i< pLine->getNumPoints(); i++)
           {
             //to do
-            printf("%.6f,%.6f,%.2f\n",pLine->getX(i),pLine->getY(i),pLine->getZ(i));
+            // printf("%.6f,%.6f,%.2f\n",pLine->getX(i),pLine->getY(i),pLine->getZ(i));
           }
         }
-      pFeature = 0;//pLayer->GetNext();
-      return true;
+      // pFeature = 0;
+      pFeature = pLayer->GetNext();
+      // return true;
     }
   }
   return false;
@@ -169,6 +192,8 @@ bool Search::findPathLine(void)
 bool Search::findObstacle(void)
 {
   std::vector<IFeature *> vFeatures;
+
+  DataManager *pDataManager = DataManager::getInstance();
 
   // get layer by layer name
   ILayer *pLayer = pDataManager->getLayer("obstacle");
@@ -212,14 +237,14 @@ bool Search::findObstacle(void)
       }
       else
       {
-        printf("wrong OGRGeometry, can't get OGRGeometry, errno: %d\n", errno);
+        printf("wrong OGRGeometry, can't get OGRGeometry: %m\n");
         return false;
       }
     }
-    printf("wrong Position or radius, can't get obstacle, errno: %d\n", errno);
+    printf("wrong Position or radius, can't get obstacle: %m\n");
     return false;
   }
-  printf("wrong obstacle layer, can't get layer, errno: %d\n", errno);
+  printf("wrong obstacle layer, can't get layer: %m\n");
   return false;
 }
 
@@ -248,7 +273,8 @@ bool Search::buildHLane(ILayer *pLayer)
   {
     printf("layer name: %s,feature count:%d\n",pLayer->GetName().c_str(),(int)pLayer->GetCount());
 
-    buildHLaneFromPathline(pLayer);
+    // buildHLaneFromPathline(pLayer);
+    buildHLaneFromHLaneID(pLayer);
 
     if (vHLaneFeatures.size())
     {
@@ -259,27 +285,49 @@ bool Search::buildHLane(ILayer *pLayer)
     }
     else
     {
-      printf("wrong vHLaneFeatures, can't get vHLaneFeatures, errno: %d\n", errno);
+      printf("wrong vHLaneFeatures, can't get vHLaneFeatures: %m\n");
       return false;
     }
   }
-  printf("wrong HLane layer, can't get layer, errno: %d\n", errno);
+  printf("wrong HLane layer, can't get layer: %m\n");
   return false;
+}
+
+bool Search::buildHLaneFromHLaneID(ILayer *pLayer)
+{
+  DataManager *pDataManager = DataManager::getInstance();
+
+  printf("layer name: %s,feature count:%d\n",pLayer->GetName().c_str(),(int)pLayer->GetCount());
+
+  for(vector<OID>::const_iterator iter = HLaneIDs.begin(); iter != HLaneIDs.end(); iter++)
+  {
+    IFeature *pFeature = pLayer->GetFeature(*iter);
+    
+    vHLaneFeatures.push_back(pFeature);
+  }
+
+  if (vHLaneFeatures.size())
+  {
+    return true;
+  }
+
+  return false;
+
 }
 
 bool Search::buildHLaneFromPathline(ILayer *pLayer)
 {
   DataManager *pDataManager = DataManager::getInstance();
-
   DataBase *pDataBase = pDataManager->getDBHandle();
 
   char sql[100] = {'0'};
   IFeature* pFeature;
 
-  for(vector<OID>::const_iterator iter = pathIDs.cbegin(); iter != pathIDs.cend(); iter++)
+  for(vector<OID>::const_iterator iter = pathIDs.begin(); iter != pathIDs.end(); iter++)
   {
     memset(sql,'0',100);
-    sprintf(sql,"select HLaneID from HLane where LINKID = %d", (unsigned int)(*iter));
+    sprintf(sql,"select HLaneID from HLane where LINKID = %ld", (*iter));
+
     pDataBase->ExcuteQuery(sql);
 
     while(pDataBase->Read())
@@ -298,6 +346,44 @@ bool Search::buildHLaneFromPathline(ILayer *pLayer)
   return false;
 }
 
+bool Search::drawWholeHLane(void)
+{
+  DataManager *pDataManager = DataManager::getInstance();
+
+  ILayer *pLayer = pDataManager->getLayer("HLane");
+
+  std::ofstream HLpoints("HLpoints.log");
+
+  if(pLayer)
+  {
+    printf("layer name: %s,feature count:%d\n",pLayer->GetName().c_str(),(int)pLayer->GetCount());
+
+    IFeature *pFeature = pLayer->GetFirst();
+
+    while(pFeature)
+    {
+      OGRGeometry *pGeometry = pFeature->GetOGRGeometry();
+      OGRFeature *pOGRFeature = pFeature->GetOGRFeatureRef();
+
+      if(pGeometry)
+      {
+        OGRLineString *pLine = (OGRLineString *)pGeometry;
+        // printf("ID: %ld\n",pOGRFeature->GetFieldAsInteger("LINKID"));
+
+        for(int j = 0; j < pLine->getNumPoints(); j++)
+        {
+          // printf("%.7f %.7f\n", pLine->getX(j), pLine->getY(j));
+          HLpoints << pLine->getX(j) << " " << pLine->getY(j) << std::endl;
+        }
+      }
+      pFeature = pLayer->GetNext();
+    }
+  }
+
+  HLpoints.close();
+  return false;
+}
+
 bool Search::buildHLaneGeneralInfo(void)
 {
   int count = vHLaneFeatures.size();
@@ -313,13 +399,13 @@ bool Search::buildHLaneGeneralInfo(void)
       }
       else
       {
-        printf("can not build HLane struct, errno: %d\n", errno);
+        printf("can not build HLane struct: %m\n");
         return false;
       }
     }
     else
     {
-      printf("wrong OGRFeature, can't get OGRFeature, errno: %d\n", errno);
+      printf("wrong OGRFeature, can't get OGRFeature: %m\n");
       return false;
     }
   }
@@ -360,6 +446,7 @@ bool Search::buildNavPointsKDtree(void)
         pos[0] = pLine->getX(j);
         pos[1] = pLine->getY(j);
         index = j + totalNumber;
+        printf("%.7f %.7f\n", pos[0], pos[1]);
         kd_insert(HLaneTree, pos, index);
       }
 
@@ -367,7 +454,7 @@ bool Search::buildNavPointsKDtree(void)
     }
     else
     {
-      printf("wrong OGRGeometry, can't get OGRGeometry, errno: %d\n", errno);
+      printf("wrong OGRGeometry, can't get OGRGeometry: %m\n");
       return false;
     }
   }
@@ -387,7 +474,7 @@ bool Search::getNearest(const double *curPos)
     /* compute the distance of the current result from the pt */
     dist = sqrt( getDistBetXY( curPos, pos) );
     /* print out the retrieved data */
-    printf( "node at (%.7f, %.7f, %.1f) is %.9f away\n", pos[0], pos[1], pos[2],  dist);
+    printf( "node at (%.7f, %.7f, %.1f) is %.9f away, our curPOS: (%.7f, %.7f, %.1f)\n", pos[0], pos[1], pos[2],  dist, curPos[0], curPos[1], curPos[2]);
     memcpy(nearHDPoint,pos,3);
     /* go to the next entry */
     kd_res_next( presults );
@@ -409,7 +496,7 @@ bool Search::getNPointsFromHere(const int number)
 {
   OGRPoint point;
 
-  for(int i; i < number; i++)
+  for(int i = 0; i < number; i++)
   {
     point.setX(nearHDPoint[0]+i);
     point.setY(nearHDPoint[1]+i);

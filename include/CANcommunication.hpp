@@ -40,22 +40,6 @@ public:
       size_t rx_filter_len;
     };
 
-    struct msg_header
-    {
-        uint8_t  msg_type;
-        uint16_t seq_nUM;
-        uint16_t sid;
-        uint32_t body_len;
-        int64_t timestamp;
-    };
-
-    bool                 connectTCP(void);
-    int                  parseHEAD(void);
-    bool                 getBODY(char *data, int size);
-    struct msg_header    getHEAD(void);
-    void                 setIP(char *IP);
-    void                 setPORT(int port);
-    bool                 sendREQ(char *data, int size);
     bool                 stringifyCAN(std::vector<OGRPoint> vPoints);
     bool                 sendCAN(void);
 
@@ -63,7 +47,7 @@ public:
     int     can_open(void);
     int     can_close(void);
     ssize_t can_read(void);
-    ssize_t can_write(const struct can_frame *frame);
+    ssize_t can_write(void);
     
     ~CANcommunication();
 private:
@@ -77,7 +61,9 @@ private:
     std::mutex CANmutex;
 
     struct can_hdl *hdl;
-    struct can_frame *frame;
+    struct can_frame send_frame;
+    struct can_frame rcv_frame;
     struct can_cfg cfg;
+    std::vector<struct can_frame> Vsend_frame;
 };
 #endif //define _CANCOMMUNICATION_HPP_
